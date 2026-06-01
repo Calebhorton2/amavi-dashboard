@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Amavi Salon & Suites — Marketing Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --cream: #f5f1ec; --cream-mid: #ede9e3; --cream-dark: #e8e2d9;
+      --border: #c8bfb4; --black: #1a1a18; --muted: #7a7168; --hint: #9a9088;
+      --green: #5a7a5a; --red: #8a4a3a;
+      --ig: #c0687a; --fb: #4a7abf; --tt: #1a1a18; --gb: #4a8a6a;
+    }
+    html, body { background: var(--cream); color: var(--black); font-family: 'Jost', sans-serif; font-weight: 300; min-height: 100vh; }
+    .page { max-width: 960px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+    .header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 0.5px solid var(--border); }
+    .brand-logo { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; letter-spacing: 0.18em; color: var(--black); line-height: 1; }
+    .brand-sub  { font-size: 10px; letter-spacing: 0.24em; color: var(--hint); text-transform: uppercase; margin-top: 5px; }
+    .brand-tag  { font-size: 11px; letter-spacing: 0.1em; color: var(--hint); font-weight: 300; margin-top: 3px; }
+    .week-pill  { font-size: 11px; letter-spacing: 0.08em; color: var(--muted); border: 0.5px solid var(--border); padding: 5px 14px; background: var(--cream-dark); text-transform: uppercase; }
+    .tabs { display: flex; border-bottom: 0.5px solid var(--border); margin-bottom: 2rem; }
+    .tab { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; padding: 10px 20px; border: none; background: none; color: var(--hint); cursor: pointer; border-bottom: 1.5px solid transparent; margin-bottom: -0.5px; font-family: 'Jost', sans-serif; font-weight: 400; }
+    .tab.active { color: var(--black); border-bottom-color: var(--black); }
+    .tab:hover:not(.active) { color: var(--black); }
+    .section { display: none; }
+    .section.active { display: block; }
+    .metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 0.5px solid var(--border); margin-bottom: 2rem; }
+    @media (max-width: 600px) { .metrics-row { grid-template-columns: repeat(2, 1fr); } }
+    .metric-cell  { background: var(--cream); padding: 1.25rem 1rem; text-align: center; }
+    .metric-label { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--hint); margin-bottom: 8px; }
+    .metric-value { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 300; color: var(--black); line-height: 1; }
+    .metric-delta { font-size: 11px; margin-top: 6px; letter-spacing: 0.04em; }
+    .delta-up { color: var(--green); } .delta-down { color: var(--red); }
+    .card { background: var(--cream-mid); border: 0.5px solid var(--border); margin-bottom: 1.25rem; padding: 1.5rem; }
+    .card-title { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.25rem; }
+    .chart-legend { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 1rem; }
+    .legend-item  { display: flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: 0.06em; color: var(--muted); }
+    .legend-sq { width: 10px; height: 10px; border-radius: 1px; flex-shrink: 0; }
+    .legend-ln { width: 18px; height: 1.5px; flex-shrink: 0; }
+    .platform-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1px; background: var(--border); margin-bottom: 1px; }
+    .platform-card { background: var(--cream); padding: 1.25rem; }
+    .platform-name { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--black); margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; font-weight: 500; }
+    .platform-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .dot-ig { background: var(--ig); } .dot-fb { background: var(--fb); } .dot-tt { background: var(--tt); } .dot-gb { background: var(--gb); }
+    .pstats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .pstat-val { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; color: var(--black); }
+    .pstat-lbl { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--hint); margin-top: 2px; }
+    .divider { height: 0.5px; background: var(--border); margin: 1.5rem 0; }
+    .form-section { margin-bottom: 1.5rem; }
+    .form-title { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--black); margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; font-weight: 500; padding-bottom: 8px; border-bottom: 0.5px solid var(--border); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 480px) { .form-grid { grid-template-columns: 1fr; } }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-lbl { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--hint); }
+    input[type="number"] { background: var(--cream); border: 0.5px solid var(--border); border-radius: 0; padding: 9px 11px; font-family: 'Jost', sans-serif; font-size: 13px; color: var(--black); outline: none; width: 100%; -moz-appearance: textfield; }
+    input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    input[type="number"]:focus { border-color: var(--black); }
+    .btn { background: var(--black); color: var(--cream); border: none; padding: 12px 26px; font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; font-weight: 400; }
+    .btn:hover { background: #2c2c28; }
+    .btn-full { width: 100%; margin-top: 1rem; }
+    .btn-outline { background: transparent; color: var(--black); border: 0.5px solid var(--black); padding: 11px 22px; font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; font-weight: 400; }
+    .btn-outline:hover { background: var(--black); color: var(--cream); }
+    .ai-response { font-size: 13px; line-height: 1.9; color: var(--black); white-space: pre-wrap; font-weight: 300; }
+    .ai-note { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--hint); margin-bottom: 12px; }
+    .save-confirm { text-align: center; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--green); margin-top: 10px; display: none; }
+    .footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 0.5px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .footer-brand { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 300; letter-spacing: 0.14em; color: var(--hint); }
+    .footer-note { font-size: 10px; letter-spacing: 0.08em; color: var(--hint); text-transform: uppercase; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div>
+      <div class="brand-logo">AMAVI</div>
+      <div class="brand-sub">Salon &amp; Suites</div>
+      <div class="brand-tag">Marketing Dashboard</div>
+    </div>
+    <div class="week-pill" id="weekLabel">—</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('overview')">Overview</button>
+    <button class="tab" onclick="switchTab('platforms')">Platforms</button>
+    <button class="tab" onclick="switchTab('update')">Update Data</button>
+    <button class="tab" onclick="switchTab('advisor')">AI Advisor</button>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div class="section active" id="tab-overview">
+    <div class="metrics-row">
+      <div class="metric-cell"><div class="metric-label">Total followers</div><div class="metric-value" id="ov-followers">—</div><div class="metric-delta" id="ov-followers-d"></div></div>
+      <div class="metric-cell"><div class="metric-label">Avg engagement</div><div class="metric-value" id="ov-engage">—</div><div class="metric-delta" id="ov-engage-d"></div></div>
+      <div class="metric-cell"><div class="metric-label">Vagaro bookings</div><div class="metric-value" id="ov-bookings">—</div><div class="metric-delta" id="ov-bookings-d"></div></div>
+      <div class="metric-cell"><div class="metric-label">Promo revenue</div><div class="metric-value" id="ov-revenue">—</div><div class="metric-delta" id="ov-revenue-d"></div></div>
+    </div>
+    <div id="no-data-msg" style="text-align:center;padding:3rem 1rem;color:var(--hint);font-size:13px;letter-spacing:0.08em">
+      No data yet — enter your first week in <strong style="font-weight:500;cursor:pointer" onclick="switchTab('update')">Update Data</strong> to get started.
+    </div>
+    <div id="charts-wrap" style="display:none">
+      <div class="card">
+        <div class="card-title">Follower growth by platform</div>
+        <div class="chart-legend">
+          <span class="legend-item"><span class="legend-ln" style="background:var(--ig)"></span>Instagram</span>
+          <span class="legend-item"><span class="legend-ln" style="background:var(--fb)"></span>Facebook</span>
+          <span class="legend-item"><span class="legend-ln" style="background:var(--tt)"></span>TikTok</span>
+          <span class="legend-item"><span class="legend-ln" style="background:var(--gb)"></span>Google</span>
+        </div>
+        <div style="position:relative;width:100%;height:220px"><canvas id="followerChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Bookings &amp; promo revenue</div>
+        <div class="chart-legend">
+          <span class="legend-item"><span class="legend-sq" style="background:#b5a89a"></span>Bookings</span>
+          <span class="legend-item"><span class="legend-sq" style="background:#7aac8a"></span>Promo revenue ($)</span>
+        </div>
+        <div style="position:relative;width:100%;height:200px"><canvas id="bookingChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Engagement rate by platform — latest week</div>
+        <div style="position:relative;width:100%;height:160px"><canvas id="engageChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLATFORMS -->
+  <div class="section" id="tab-platforms">
+    <div class="platform-grid" style="margin-bottom:1px">
+      <div class="platform-card">
+        <div class="platform-name"><span class="platform-dot dot-ig"></span>Instagram</div>
+        <div class="pstats">
+          <div><div class="pstat-val" id="ig-followers">—</div><div class="pstat-lbl">Followers</div></div>
+          <div><div class="pstat-val" id="ig-likes">—</div><div class="pstat-lbl">Avg likes</div></div>
+          <div><div class="pstat-val" id="ig-reach">—</div><div class="pstat-lbl">Reach</div></div>
+        </div>
+      </div>
+      <div class="platform-card">
+        <div class="platform-name"><span class="platform-dot dot-fb"></span>Facebook</div>
+        <div class="pstats">
+          <div><div class="pstat-val" id="fb-followers">—</div><div class="pstat-lbl">Followers</div></div>
+          <div><div class="pstat-val" id="fb-likes">—</div><div class="pstat-lbl">Avg likes</div></div>
+          <div><div class="pstat-val" id="fb-reach">—</div><div class="pstat-lbl">Reach</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="platform-grid">
+      <div class="platform-card">
+        <div class="platform-name"><span class="platform-dot dot-tt"></span>TikTok</div>
+        <div class="pstats">
+          <div><div class="pstat-val" id="tt-followers">—</div><div class="pstat-lbl">Followers</div></div>
+          <div><div class="pstat-val" id="tt-views">—</div><div class="pstat-lbl">Avg views</div></div>
+          <div><div class="pstat-val" id="tt-reach">—</div><div class="pstat-lbl">Reach</div></div>
+        </div>
+      </div>
+      <div class="platform-card">
+        <div class="platform-name"><span class="platform-dot dot-gb"></span>Google Business</div>
+        <div class="pstats">
+          <div><div class="pstat-val" id="gb-reviews">—</div><div class="pstat-lbl">Reviews</div></div>
+          <div><div class="pstat-val" id="gb-rating">—</div><div class="pstat-lbl">Rating</div></div>
+          <div><div class="pstat-val" id="gb-searches">—</div><div class="pstat-lbl">Searches</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="card">
+      <div class="card-title">New vs returning clients — latest week</div>
+      <div style="position:relative;width:100%;height:160px"><canvas id="clientChart"></canvas></div>
+      <div class="chart-legend" style="justify-content:center;margin-top:12px;margin-bottom:0">
+        <span class="legend-item"><span class="legend-sq" style="background:#b5a89a"></span>Returning — <span id="leg-returning">—</span></span>
+        <span class="legend-item"><span class="legend-sq" style="background:var(--black)"></span>New — <span id="leg-new">—</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPDATE DATA -->
+  <div class="section" id="tab-update">
+    <div class="form-section">
+      <div class="form-title"><span class="platform-dot dot-ig"></span>Instagram</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-lbl">Followers</label><input type="number" id="f-ig-followers" placeholder="e.g. 4820"></div>
+        <div class="form-group"><label class="form-lbl">Avg likes / post</label><input type="number" id="f-ig-likes" placeholder="e.g. 112"></div>
+        <div class="form-group"><label class="form-lbl">Weekly reach</label><input type="number" id="f-ig-reach" placeholder="e.g. 3200"></div>
+        <div class="form-group"><label class="form-lbl">Posts this week</label><input type="number" id="f-ig-posts" placeholder="e.g. 5"></div>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-title"><span class="platform-dot dot-fb"></span>Facebook</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-lbl">Followers</label><input type="number" id="f-fb-followers" placeholder="e.g. 2105"></div>
+        <div class="form-group"><label class="form-lbl">Avg likes / post</label><input type="number" id="f-fb-likes" placeholder="e.g. 38"></div>
+        <div class="form-group"><label class="form-lbl">Weekly reach</label><input type="number" id="f-fb-reach" placeholder="e.g. 980"></div>
+        <div class="form-group"><label class="form-lbl">Posts this week</label><input type="number" id="f-fb-posts" placeholder="e.g. 3"></div>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-title"><span class="platform-dot dot-tt"></span>TikTok</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-lbl">Followers</label><input type="number" id="f-tt-followers" placeholder="e.g. 1505"></div>
+        <div class="form-group"><label class="form-lbl">Avg views / video</label><input type="number" id="f-tt-views" placeholder="e.g. 1840"></div>
+        <div class="form-group"><label class="form-lbl">Weekly reach</label><input type="number" id="f-tt-reach" placeholder="e.g. 5600"></div>
+        <div class="form-group"><label class="form-lbl">Videos this week</label><input type="number" id="f-tt-posts" placeholder="e.g. 2"></div>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-title"><span class="platform-dot dot-gb"></span>Google Business</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-lbl">Total reviews</label><input type="number" id="f-gb-reviews" placeholder="e.g. 187"></div>
+        <div class="form-group"><label class="form-lbl">Avg rating (1–5)</label><input type="number" id="f-gb-rating" placeholder="e.g. 4.9" step="0.1" min="1" max="5"></div>
+        <div class="form-group"><label class="form-lbl">Search views</label><input type="number" id="f-gb-searches" placeholder="e.g. 640"></div>
+        <div class="form-group"><label class="form-lbl">Direction requests</label><input type="number" id="f-gb-directions" placeholder="e.g. 72"></div>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-title">Vagaro</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-lbl">Bookings this week</label><input type="number" id="f-vg-bookings" placeholder="e.g. 63"></div>
+        <div class="form-group"><label class="form-lbl">Promo revenue ($)</label><input type="number" id="f-vg-revenue" placeholder="e.g. 2140"></div>
+        <div class="form-group"><label class="form-lbl">New clients</label><input type="number" id="f-vg-new" placeholder="e.g. 11"></div>
+        <div class="form-group"><label class="form-lbl">Returning clients</label><input type="number" id="f-vg-returning" placeholder="e.g. 52"></div>
+      </div>
+    </div>
+    <button class="btn btn-full" onclick="saveData()">Save this week's data</button>
+    <div class="save-confirm" id="save-confirm">Saved successfully</div>
+  </div>
+
+  <!-- AI ADVISOR -->
+  <div class="section" id="tab-advisor">
+    <div class="card">
+      <div class="card-title">Marketing advisor</div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.9;margin-bottom:1.25rem;font-weight:300">Your AI advisor reviews your current Amavi metrics and returns specific, actionable recommendations tailored to your salon's growth goals.</p>
+      <button class="btn-outline" onclick="getAdvice()">Analyze my marketing →</button>
+    </div>
+    <div class="card" id="ai-output" style="display:none">
+      <div class="ai-note" id="ai-note">Analysis</div>
+      <div id="ai-content"></div>
+      <div style="margin-top:1.25rem;display:none" id="ai-actions"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-brand">AMAVI</div>
+    <div class="footer-note">Internal use only</div>
+  </div>
+
+</div>
+
+<script>
+  const state = { weeks: [] };
+  try { const s = localStorage.getItem('amavi_dash_v1'); if (s) { state.weeks = JSON.parse(s); if (state.weeks.length) renderAll(); } } catch(e) {}
+
+  function switchTab(name) {
+    const names = ['overview','platforms','update','advisor'];
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', names[i] === name));
+    document.querySelectorAll('.section').forEach(s => s.classList.toggle('active', s.id === 'tab-' + name));
+  }
+
+  const g = id => { const v = document.getElementById(id)?.value; return v === '' || v === undefined ? null : Number(v); };
+
+  function setDelta(id, d, prefix='') {
+    const el = document.getElementById(id);
+    if (!el || d == null) return;
+    el.textContent = (d >= 0 ? '+' : '-') + prefix + Math.abs(d).toLocaleString() + ' this week';
+    el.className = 'metric-delta ' + (d >= 0 ? 'delta-up' : 'delta-down');
+  }
+
+  function saveData() {
+    const entry = {
+      date: new Date().toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}),
+      ig: { followers: g('f-ig-followers'), likes: g('f-ig-likes'), reach: g('f-ig-reach'), posts: g('f-ig-posts') },
+      fb: { followers: g('f-fb-followers'), likes: g('f-fb-likes'), reach: g('f-fb-reach'), posts: g('f-fb-posts') },
+      tt: { followers: g('f-tt-followers'), views: g('f-tt-views'), reach: g('f-tt-reach'), posts: g('f-tt-posts') },
+      gb: { reviews: g('f-gb-reviews'), rating: g('f-gb-rating'), searches: g('f-gb-searches'), directions: g('f-gb-directions') },
+      vg: { bookings: g('f-vg-bookings'), revenue: g('f-vg-revenue'), newClients: g('f-vg-new'), returning: g('f-vg-returning') }
+    };
+    state.weeks.push(entry);
+    try { localStorage.setItem('amavi_dash_v1', JSON.stringify(state.weeks)); } catch(e) {}
+    renderAll();
+    const msg = document.getElementById('save-confirm');
+    msg.style.display = 'block';
+    setTimeout(() => msg.style.display = 'none', 3000);
+  }
+
+  let fChart, bChart, eChart, cChart;
+
+  function renderAll() {
+    const weeks = state.weeks;
+    if (!weeks.length) return;
+    const c = weeks[weeks.length - 1];
+    const p = weeks.length > 1 ? weeks[weeks.length - 2] : null;
+    document.getElementById('weekLabel').textContent = 'Week of ' + c.date;
+    document.getElementById('no-data-msg').style.display = 'none';
+    document.getElementById('charts-wrap').style.display = 'block';
+
+    const totalF = (c.ig.followers||0)+(c.fb.followers||0)+(c.tt.followers||0);
+    const prevF  = p ? ((p.ig.followers||0)+(p.fb.followers||0)+(p.tt.followers||0)) : null;
+    document.getElementById('ov-followers').textContent = totalF > 0 ? totalF.toLocaleString() : '—';
+    setDelta('ov-followers-d', prevF != null ? totalF - prevF : null);
+
+    const engVals = [c.ig.likes, c.fb.likes, c.tt.views].filter(v => v != null);
+    const avgEng  = engVals.length ? Math.round(engVals.reduce((a,b)=>a+b,0)/engVals.length) : null;
+    document.getElementById('ov-engage').textContent = avgEng != null ? avgEng.toLocaleString() : '—';
+    document.getElementById('ov-bookings').textContent = c.vg.bookings != null ? c.vg.bookings : '—';
+    setDelta('ov-bookings-d', p && p.vg.bookings != null ? c.vg.bookings - p.vg.bookings : null);
+    document.getElementById('ov-revenue').textContent = c.vg.revenue != null ? '$' + c.vg.revenue.toLocaleString() : '—';
+    setDelta('ov-revenue-d', p && p.vg.revenue != null ? c.vg.revenue - p.vg.revenue : null, '$');
+
+    const set = (id, val, dec) => { const el = document.getElementById(id); if (el && val != null) el.textContent = dec ? Number(val).toFixed(dec) : val.toLocaleString(); };
+    set('ig-followers',c.ig.followers); set('ig-likes',c.ig.likes); set('ig-reach',c.ig.reach);
+    set('fb-followers',c.fb.followers); set('fb-likes',c.fb.likes); set('fb-reach',c.fb.reach);
+    set('tt-followers',c.tt.followers); set('tt-views',c.tt.views); set('tt-reach',c.tt.reach);
+    set('gb-reviews',c.gb.reviews); set('gb-searches',c.gb.searches);
+    if (c.gb.rating != null) document.getElementById('gb-rating').textContent = Number(c.gb.rating).toFixed(1) + ' ★';
+    document.getElementById('leg-new').textContent = c.vg.newClients ?? '—';
+    document.getElementById('leg-returning').textContent = c.vg.returning ?? '—';
+
+    const labels = weeks.map(w => w.date);
+    if (fChart) fChart.destroy();
+    fChart = new Chart(document.getElementById('followerChart'), {
+      type:'line', data:{labels, datasets:[
+        {label:'Instagram', data:weeks.map(w=>w.ig.followers), borderColor:'#c0687a', backgroundColor:'transparent', tension:0.3, pointRadius:3, borderWidth:1.5},
+        {label:'Facebook',  data:weeks.map(w=>w.fb.followers), borderColor:'#4a7abf', backgroundColor:'transparent', tension:0.3, pointRadius:3, borderWidth:1.5, borderDash:[4,3]},
+        {label:'TikTok',    data:weeks.map(w=>w.tt.followers), borderColor:'#1a1a18', backgroundColor:'transparent', tension:0.3, pointRadius:3, borderWidth:1.5},
+        {label:'Google',    data:weeks.map(w=>w.gb.searches),  borderColor:'#4a8a6a', backgroundColor:'transparent', tension:0.3, pointRadius:3, borderWidth:1.5, borderDash:[2,4]}
+      ]},
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:false, grid:{color:'rgba(0,0,0,0.04)'}, ticks:{font:{size:11}, color:'#9a9088'}}, x:{grid:{display:false}, ticks:{font:{size:10}, color:'#9a9088', maxRotation:30}}}}
+    });
+
+    if (bChart) bChart.destroy();
+    bChart = new Chart(document.getElementById('bookingChart'), {
+      type:'bar', data:{labels, datasets:[
+        {label:'Bookings', data:weeks.map(w=>w.vg.bookings), backgroundColor:'#b5a89a', borderRadius:1},
+        {label:'Revenue',  data:weeks.map(w=>w.vg.revenue),  backgroundColor:'#7aac8a', borderRadius:1}
+      ]},
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, grid:{color:'rgba(0,0,0,0.04)'}, ticks:{font:{size:11}, color:'#9a9088'}}, x:{grid:{display:false}, ticks:{font:{size:10}, color:'#9a9088', maxRotation:30}}}}
+    });
+
+    const igEng = c.ig.likes && c.ig.followers ? +((c.ig.likes/c.ig.followers*100).toFixed(1)) : null;
+    const fbEng = c.fb.likes && c.fb.followers ? +((c.fb.likes/c.fb.followers*100).toFixed(1)) : null;
+    const ttEng = c.tt.views && c.tt.followers ? +((c.tt.views/c.tt.followers*100).toFixed(1)) : null;
+    const gbEng = c.gb.searches ? +(((c.gb.directions||0)/c.gb.searches*100).toFixed(1)) : null;
+    if (eChart) eChart.destroy();
+    eChart = new Chart(document.getElementById('engageChart'), {
+      type:'bar', data:{labels:['Instagram','Facebook','TikTok','Google'], datasets:[{data:[igEng,fbEng,ttEng,gbEng], backgroundColor:['#c0687a','#4a7abf','#1a1a18','#4a8a6a'], borderRadius:1}]},
+      options:{indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true, grid:{color:'rgba(0,0,0,0.04)'}, ticks:{callback:v=>v+'%', font:{size:11}, color:'#9a9088'}}, y:{grid:{display:false}, ticks:{font:{size:11}, color:'#9a9088'}}}}
+    });
+
+    if (cChart) cChart.destroy();
+    cChart = new Chart(document.getElementById('clientChart'), {
+      type:'doughnut', data:{labels:['Returning','New'], datasets:[{data:[c.vg.returning||0, c.vg.newClients||0], backgroundColor:['#b5a89a','#1a1a18'], borderWidth:0}]},
+      options:{responsive:true, maintainAspectRatio:false, cutout:'72%', plugins:{legend:{display:false}}}
+    });
+  }
+
+  async function getAdvice() {
+    const outEl = document.getElementById('ai-output');
+    const contentEl = document.getElementById('ai-content');
+    const noteEl = document.getElementById('ai-note');
+    outEl.style.display = 'block';
+    contentEl.innerHTML = '<p style="font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:var(--hint)">Analyzing your metrics...</p>';
+    const c = state.weeks.length ? state.weeks[state.weeks.length-1] : null;
+    let dataDesc = 'No data entered yet. Give general luxury salon marketing tips for a high-end Utah salon.';
+    if (c) {
+      noteEl.textContent = 'Analysis based on ' + c.date;
+      dataDesc = `Amavi Salon & Suites, American Fork, Utah:
+- Instagram: ${c.ig.followers??'unknown'} followers, ${c.ig.likes??'unknown'} avg likes/post, ${c.ig.reach??'unknown'} weekly reach
+- Facebook: ${c.fb.followers??'unknown'} followers, ${c.fb.likes??'unknown'} avg likes/post, ${c.fb.reach??'unknown'} reach
+- TikTok: ${c.tt.followers??'unknown'} followers, ${c.tt.views??'unknown'} avg views/video
+- Google Business: ${c.gb.reviews??'unknown'} reviews, ${c.gb.rating??'unknown'} rating, ${c.gb.searches??'unknown'} search views
+- Vagaro: ${c.vg.bookings??'unknown'} bookings, $${c.vg.revenue??'unknown'} promo revenue, ${c.vg.newClients??'unknown'} new clients`;
+    }
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:1000, messages:[{role:'user', content:`You are a luxury salon marketing advisor. Amavi Salon & Suites is a high-end salon in American Fork, Utah with a refined, minimal brand. Analyze these metrics and give 4 specific, actionable tips. Keep the tone elevated and professional. Format as numbered tips with a short header for each.\n\n${dataDesc}`}]})
+      });
+      const data = await res.json();
+      const text = data.content?.map(b=>b.text||'').join('')||'No response received.';
+      contentEl.innerHTML = `<div class="ai-response">${text}</div>`;
+    } catch(e) {
+      contentEl.innerHTML = '<p class="ai-response">Could not reach the advisor. Please check your connection and try again.</p>';
+    }
+  }
+</script>
+</body>
+</html>
